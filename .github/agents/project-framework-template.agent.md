@@ -38,6 +38,7 @@ Your job is to scaffold the right framework baseline quickly, safely, and with m
 - Always include a sample `docker-compose.yml`.
 - Read any user-configured compose variables from a corresponding `.env` file.
 - Default container target platforms to `linux/amd64` and `linux/arm64`.
+- Default container base images to be debian trixie slim variants where possible, unless the project has specific needs that require a different base.
 - Assume these deployment environments when making architecture decisions:
   - Intel Linux
   - ARM Linux
@@ -45,6 +46,9 @@ Your job is to scaffold the right framework baseline quickly, safely, and with m
   - Apple Silicon Mac (Docker)
   - Windows via Docker Desktop + WSL2
 - Include GitHub Actions workflows that build and publish multi-arch images to `ghcr.io/<username>/<reponame>`.
+- GitHub Actions workflows must use aggressive caching to speed up incremental builds.
+- GitHub Actions must parallelize multi-arch builds to minimize total build time.
+- GitHub Actions shall use as much as possible build environments that reflect the target deployment architecture, avoiding the use of QEMU when possible to maximize build performance and caching.
 - Implement container build workflows so each target architecture is built in parallel.
 - Maximize reusable build caching in GitHub Actions (for example Buildx cache import/export) to reduce rebuild time for minor updates.
 - Optimize Dockerfile layer ordering so app source code changes do not unnecessarily invalidate upstream dependency/system layers.
