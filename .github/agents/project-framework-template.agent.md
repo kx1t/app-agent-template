@@ -29,6 +29,10 @@ Your job is to scaffold the right framework baseline quickly, safely, and with m
 - Treat GitHub as the canonical remote host for all projects.
 - Default new repositories to public visibility unless the user explicitly requests private.
 - Ensure the project has a production-ready Dockerfile.
+- When testing Python locally, use a virtual environment (`venv`).
+- When deploying Python into containers, do not use a virtual environment.
+- If pip is required inside a container, use the appropriate flags to allow non-venv/system installation when needed (for example `--break-system-packages` where applicable).
+- When installing Python libraries and dependencies in Dockerfiles, strongly prefer apt-based installations over pip/pip3 when suitable distro packages exist.
 - Prefer `ENV` in the Dockerfile for container variables and constants.
 - Expose in `docker-compose.yml` only variables that are clearly mandatory per deployment, such as ports and credentials.
 - Always include a sample `docker-compose.yml`.
@@ -41,6 +45,9 @@ Your job is to scaffold the right framework baseline quickly, safely, and with m
   - Apple Silicon Mac (Docker)
   - Windows via Docker Desktop + WSL2
 - Include GitHub Actions workflows that build and publish multi-arch images to `ghcr.io/<username>/<reponame>`.
+- Implement container build workflows so each target architecture is built in parallel.
+- Maximize reusable build caching in GitHub Actions (for example Buildx cache import/export) to reduce rebuild time for minor updates.
+- Optimize Dockerfile layer ordering so app source code changes do not unnecessarily invalidate upstream dependency/system layers.
 - Configure workflow triggers so docs-only or metadata-only changes do not trigger image rebuilds.
 - Treat these as docs/metadata-only by default:
   - `README*` and `docs/**`
@@ -69,6 +76,7 @@ Your job is to scaffold the right framework baseline quickly, safely, and with m
 
 ## Testing Requirements
 - Whenever you implement a feature or make code changes, run a unit test or other focused verification for the touched slice.
+- For local Python testing, run tests from an activated `venv` and avoid relying on system-site packages.
 - Verify the implementation works correctly.
 - Verify the implementation does not introduce unexpected latency or unnecessary image/container size growth.
 - If meaningful latency or size growth is expected, warn the user clearly.
@@ -86,10 +94,14 @@ Your job is to scaffold the right framework baseline quickly, safely, and with m
    - visibility (public/private) if the user wants to override the public default
 5. Prefer official scaffolders and documented templates, then generate the project with sensible defaults and clear file layout.
 6. Create container assets with a production Dockerfile and `.dockerignore` suitable for multi-stage builds.
+   - Prefer distro/apt packages for Python dependencies where practical; only fall back to pip when necessary.
+   - Do not create a venv inside containers; if pip is used, include required flags for system installs as needed.
+   - Structure Dockerfile layers to separate base/system/dependency installation from frequently changing app source.
 7. Add GitHub Actions workflow files that:
-   - build multi-arch images for `linux/amd64,linux/arm64`
+   - build multi-arch images for `linux/amd64,linux/arm64` in parallel per architecture
    - authenticate to GHCR
    - tag and push to `ghcr.io/<username>/<reponame>`
+   - use aggressive cache reuse to speed up incremental builds
    - run on relevant code/container changes
    - skip docs-only and metadata-only changes using path filters
 8. Create or connect the GitHub repository and set remote origin.
